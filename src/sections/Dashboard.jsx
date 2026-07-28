@@ -169,7 +169,7 @@ export function Dashboard() {
   return (
     <div className="dashboard">
       <div className="dashboard-hero">
-        <h1 className="hero-title">{(() => { const h = new Date().getHours(); return h < 12 ? 'Buenos dias' : h < 19 ? 'Buenas tardes' : 'Buenas noches'; })()}</h1>
+        <h1 className="hero-title">Bienvenida</h1>
         <p className="hero-sub">{activeCamion.nombre}</p>
       </div>
 
