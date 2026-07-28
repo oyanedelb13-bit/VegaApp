@@ -11,6 +11,13 @@
   max-width: 260px;
 }
 
+@media (max-width: 767px) {
+  .camion-selector {
+    max-width: 160px;
+    padding: 5px 8px;
+  }
+}
+
 .camion-selector:hover {
   background: rgba(255,255,255,0.25);
 }
@@ -47,6 +54,12 @@
 .camion-status.cerrado {
   background: rgba(255,255,255,0.3);
   color: white;
+}
+
+@media (max-width: 767px) {
+  .camion-status {
+    display: none;
+  }
 }
 
 .chevron {
