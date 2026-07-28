@@ -12,6 +12,12 @@
   z-index: 50;
 }
 
+@media (max-width: 767px) {
+  .bottom-nav {
+    display: none;
+  }
+}
+
 .nav-tab {
   flex: 1;
   display: flex;

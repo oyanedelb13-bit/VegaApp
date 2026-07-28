@@ -49,6 +49,7 @@ export function Inventario() {
   const camionProductos = useCamionProductos();
   const toast = useToast();
   const [search, setSearch] = useState('');
+  const [sortOrder, setSortOrder] = useState('alpha');
   const [showModal, setShowModal] = useState(false);
   const [newNombre, setNewNombre] = useState('');
   const [newEmoji, setNewEmoji] = useState('🍏');
@@ -141,9 +142,15 @@ export function Inventario() {
     return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 
-  const filteredProductos = state.productos.filter(p =>
-    normalize(p.nombre).includes(normalize(search))
-  );
+  const filteredProductos = state.productos
+    .filter(p => normalize(p.nombre).includes(normalize(search)))
+    .sort((a, b) => {
+      const stockA = getCamionProduct(a.id).stockTotal;
+      const stockB = getCamionProduct(b.id).stockTotal;
+      if (sortOrder === 'less') return stockA - stockB;
+      if (sortOrder === 'more') return stockB - stockA;
+      return normalize(a.nombre).localeCompare(normalize(b.nombre));
+    });
 
   const filteredEmojis = EMOJI_LIST.filter(item =>
     item.tags.some(tag => normalize(tag).includes(normalize(emojiQuery)))
@@ -229,6 +236,27 @@ export function Inventario() {
           onChange={(e) => setSearch(e.target.value)}
           className="search-input"
         />
+      </div>
+
+      <div className="sort-filters">
+        <button
+          className={`sort-btn ${sortOrder === 'alpha' ? 'active' : ''}`}
+          onClick={() => setSortOrder('alpha')}
+        >
+          A-Z
+        </button>
+        <button
+          className={`sort-btn ${sortOrder === 'less' ? 'active' : ''}`}
+          onClick={() => setSortOrder('less')}
+        >
+          Menos stock
+        </button>
+        <button
+          className={`sort-btn ${sortOrder === 'more' ? 'active' : ''}`}
+          onClick={() => setSortOrder('more')}
+        >
+          Mas stock
+        </button>
       </div>
 
       <div className="product-grid">

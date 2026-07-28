@@ -1,11 +1,12 @@
 .inventario {
   padding: 16px;
-  padding-bottom: 80px;
+  padding-bottom: 120px;
 }
 
 @media (min-width: 768px) {
   .inventario {
     padding: 20px;
+    padding-bottom: 80px;
   }
 }
 
@@ -87,7 +88,38 @@
 .search-input:focus {
   outline: none;
   border-color: var(--color-primary);
+  background: var(--color-surface);
   box-shadow: 0 0 0 3px rgba(91, 124, 46, 0.1);
+}
+
+/* Sort Filters */
+.sort-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sort-btn {
+  padding: 8px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sort-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.sort-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
 }
 
 .search-input::placeholder {
