@@ -72,18 +72,18 @@
 }
 
 .btn-small {
-  padding: 6px 12px;
-  font-size: 0.8125rem;
+  padding: 8px 14px;
+  font-size: 0.875rem;
 }
 
 .btn-medium {
-  padding: 10px 18px;
-  font-size: 0.9375rem;
+  padding: 12px 20px;
+  font-size: 1rem;
 }
 
 .btn-large {
-  padding: 12px 24px;
-  font-size: 1rem;
+  padding: 14px 28px;
+  font-size: 1.0625rem;
 }
 
 .btn-full {

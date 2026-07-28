@@ -8,15 +8,15 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: var(--color-surface);
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-md);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   color: var(--color-text);
   text-align: left;
   transition: all var(--transition-fast);
-  min-height: 44px;
+  min-height: 48px;
 }
 
 .search-select-trigger:hover {
@@ -31,7 +31,7 @@
 .ss-selected {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-weight: 500;
 }
 
@@ -69,13 +69,13 @@
 
 .ss-search-wrapper {
   position: relative;
-  padding: 8px;
+  padding: 10px;
   border-bottom: 1px solid var(--color-border-light);
 }
 
 .ss-search-icon {
   position: absolute;
-  left: 16px;
+  left: 18px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-secondary);
@@ -84,10 +84,10 @@
 
 .ss-search {
   width: 100%;
-  padding: 8px 10px 8px 32px;
+  padding: 10px 12px 10px 36px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   background: var(--color-background);
   color: var(--color-text);
   transition: border-color var(--transition-fast);
@@ -100,25 +100,25 @@
 }
 
 .ss-options {
-  max-height: 220px;
+  max-height: 240px;
   overflow-y: auto;
-  padding: 4px;
+  padding: 6px;
 }
 
 .ss-option, .ss-option-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: var(--color-text);
   text-align: left;
   transition: all var(--transition-fast);
 }
 
 .ss-option {
-  padding: 9px 10px;
+  padding: 10px 12px;
 }
 
 .ss-option:hover, .ss-option.highlighted, .ss-option-wrapper:hover, .ss-option-wrapper.highlighted {
@@ -134,14 +134,14 @@
 .ss-option-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex: 1;
-  padding: 9px 10px;
+  padding: 10px 12px;
   background: transparent;
   border: none;
   cursor: pointer;
   text-align: left;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: inherit;
   font-family: inherit;
   border-radius: var(--radius-sm);
@@ -156,8 +156,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
-  margin-right: 6px;
+  padding: 8px;
+  margin-right: 8px;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -178,7 +178,7 @@
   font-weight: 600;
   border-top: 1px solid var(--color-border-light);
   margin-top: 2px;
-  gap: 6px;
+  gap: 8px;
 }
 
 .ss-create.highlighted {
@@ -186,14 +186,14 @@
 }
 
 .ss-empty {
-  padding: 20px 16px;
+  padding: 24px 16px;
   text-align: center;
   color: var(--color-text-secondary);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
 }
 
 @media (min-width: 768px) {
   .ss-options {
-    max-height: 260px;
+    max-height: 280px;
   }
 }

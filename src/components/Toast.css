@@ -5,9 +5,9 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: var(--radius-md);
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   z-index: 1100;
   animation: slideUp var(--transition-normal) ease-out;
@@ -35,5 +35,5 @@
 
 .toast-message {
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
 }
