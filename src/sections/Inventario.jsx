@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Plus, X, Table2 } from 'lucide-react';
 import { useStore, useActiveCamion, useCamionProductos } from '../context/StoreContext';
+import { api } from '../api';
 import { ProductCard } from '../components/ProductCard';
 import { Button } from '../components/Button';
 import { useToast } from '../components/Toast';
@@ -43,7 +44,7 @@ const EMOJI_LIST = [
 
 
 export function Inventario() {
-  const { state, dispatch } = useStore();
+  const { state, updateCamionProductos, updateProducto, deleteProducto: deleteProductoFn, crearProducto: crearProductoFn } = useStore();
   const activeCamion = useActiveCamion();
   const camionProductos = useCamionProductos();
   const toast = useToast();
@@ -58,6 +59,7 @@ export function Inventario() {
 
   const [showExcel, setShowExcel] = useState(false);
   const [excelData, setExcelData] = useState([]);
+  const [newExcelRow, setNewExcelRow] = useState({ productoId: '', stock: '', precio: '' });
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -83,7 +85,7 @@ export function Inventario() {
     return camionProductos.find(cp => cp.productoId === productoId) || { stockTotal: 0, reservado: 0 };
   }
 
-  function handleUpdateStock(productoId, newStock) {
+  async function handleUpdateStock(productoId, newStock) {
     const camion = state.camiones.find(c => c.id === state.activeCamionId);
     if (!camion) return;
     const productos = (camion.productos || []).map(p =>
@@ -92,27 +94,30 @@ export function Inventario() {
     if (!productos.find(p => p.productoId === productoId)) {
       productos.push({ productoId, stockTotal: newStock, reservado: 0 });
     }
-    dispatch({ type: 'UPDATE_CAMION_PRODUCTOS', payload: productos });
+    await updateCamionProductos(productos);
   }
 
-  function handleUpdatePrecio(productoId, newPrecio) {
-    dispatch({ type: 'UPDATE_PRODUCTO', payload: { id: productoId, precioDefault: newPrecio } });
+  async function handleUpdatePrecio(productoId, newPrecio) {
+    await updateProducto(productoId, { precioDefault: newPrecio });
   }
 
-  function crearProducto() {
+  async function handleDeleteProducto(productoId) {
+    try {
+      await deleteProductoFn(productoId);
+      toast('Producto eliminado', 'success');
+    } catch {
+      toast('Error al eliminar', 'error');
+    }
+  }
+
+  async function crearProducto() {
     if (!newNombre.trim()) { toast('Ingresa el nombre', 'error'); return; }
-    const id = 'p' + Date.now().toString(36);
-    dispatch({
-      type: 'ADD_PRODUCTO',
-      payload: {
-        id,
-        nombre: newNombre.trim(),
-        emoji: newEmoji.trim(),
-        unidad: newUnidad,
-        activo: true,
-        precioDefault: 0,
-        nombreVariantes: [newNombre.trim().toLowerCase()]
-      }
+    await crearProductoFn({
+      nombre: newNombre.trim(),
+      emoji: newEmoji.trim(),
+      unidad: newUnidad,
+      precioDefault: 0,
+      nombreVariantes: [newNombre.trim().toLowerCase()]
     });
     setNewNombre('');
     setNewEmoji('🍏');
@@ -158,8 +163,8 @@ export function Inventario() {
         emoji: p.emoji,
         nombre: p.nombre,
         unidad: p.unidad,
-        stock: cp.stockTotal,
-        precio: p.precioDefault || 0
+        stock: String(cp.stockTotal),
+        precio: String(p.precioDefault || 0)
       };
     });
     setExcelData(data);
@@ -175,16 +180,32 @@ export function Inventario() {
   function saveExcel() {
     excelData.forEach(row => {
       const cp = getCamionProduct(row.id);
-      if (cp.stockTotal !== row.stock) {
-        handleUpdateStock(row.id, row.stock);
+      const newStock = Number(row.stock) || 0;
+      const newPrecio = Number(row.precio) || 0;
+      if (cp.stockTotal !== newStock) {
+        handleUpdateStock(row.id, newStock);
       }
-      if ((state.productos.find(p => p.id === row.id)?.precioDefault || 0) !== row.precio) {
-        handleUpdatePrecio(row.id, row.precio);
+      if ((state.productos.find(p => p.id === row.id)?.precioDefault || 0) !== newPrecio) {
+        handleUpdatePrecio(row.id, newPrecio);
       }
     });
+    if (newExcelRow.productoId) {
+      addExcelProduct();
+    }
     setShowExcel(false);
     toast('Precios y stock actualizados', 'success');
   }
+
+  function addExcelProduct() {
+    const pid = newExcelRow.productoId;
+    if (!pid) return;
+    handleUpdateStock(pid, Number(newExcelRow.stock) || 0);
+    handleUpdatePrecio(pid, Number(newExcelRow.precio) || 0);
+    setNewExcelRow({ productoId: '', stock: '', precio: '' });
+    toast('Producto agregado', 'success');
+  }
+
+  const productosNoEnExcel = state.productos.filter(p => !excelData.some(e => e.id === p.id));
 
   return (
     <div className="inventario">
@@ -221,6 +242,7 @@ export function Inventario() {
               reservado={cp.reservado}
               onUpdateStock={(newStock) => handleUpdateStock(producto.id, newStock)}
               onUpdatePrecio={(newPrecio) => handleUpdatePrecio(producto.id, newPrecio)}
+              onDelete={handleDeleteProducto}
             />
           );
         })}
@@ -257,24 +279,61 @@ export function Inventario() {
                         <td className="excel-name">{row.nombre}</td>
                         <td>
                           <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
                             className="excel-input"
                             value={row.stock}
-                            onChange={(e) => updateExcelField(row.id, 'stock', Number(e.target.value))}
-                            min={0}
+                            onChange={(e) => updateExcelField(row.id, 'stock', e.target.value)}
                           />
                         </td>
                         <td>
                           <input
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
                             className="excel-input"
                             value={row.precio}
-                            onChange={(e) => updateExcelField(row.id, 'precio', Number(e.target.value))}
-                            min={0}
+                            onChange={(e) => updateExcelField(row.id, 'precio', e.target.value)}
                           />
                         </td>
                       </tr>
                     ))}
+                    {productosNoEnExcel.length > 0 && (
+                      <tr className="excel-add-row">
+                        <td className="excel-emoji">+</td>
+                        <td>
+                          <select
+                            className="excel-select"
+                            value={newExcelRow.productoId}
+                            onChange={(e) => setNewExcelRow(prev => ({ ...prev, productoId: e.target.value }))}
+                          >
+                            <option value="">Agregar producto...</option>
+                            {productosNoEnExcel.map(p => (
+                              <option key={p.id} value={p.id}>{p.emoji} {p.nombre}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            className="excel-input"
+                            placeholder="Stock"
+                            value={newExcelRow.stock}
+                            onChange={(e) => setNewExcelRow(prev => ({ ...prev, stock: e.target.value }))}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            className="excel-input"
+                            placeholder="Precio"
+                            value={newExcelRow.precio}
+                            onChange={(e) => setNewExcelRow(prev => ({ ...prev, precio: e.target.value }))}
+                          />
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

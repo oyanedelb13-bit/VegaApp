@@ -15,3 +15,15 @@ export async function PUT(request, { params }) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE(request, { params }) {
+  try {
+    const { id } = await params;
+    await sql`DELETE FROM pedidos WHERE camion_id = ${id}`;
+    await sql`DELETE FROM camion_productos WHERE camion_id = ${id}`;
+    await sql`DELETE FROM camiones WHERE id = ${id}`;
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

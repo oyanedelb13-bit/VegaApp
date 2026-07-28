@@ -14,7 +14,7 @@ import '../sections/Dashboard.css';
 
 export function Dashboard() {
   const router = useRouter();
-  const { state, dispatch } = useStore();
+  const { state, crearCamion: crearCamionFn, cerrarCamion, crearCliente: crearClienteFn, deleteCliente: deleteClienteFn, crearProducto: crearProductoFn, crearPedido: crearPedidoFn, updateStock, updateCamionProductos } = useStore();
   const activeCamion = useActiveCamion();
   const camionProductos = useCamionProductos();
   const toast = useToast();
@@ -61,32 +61,24 @@ export function Dashboard() {
   const clienteOptions = state.clientes.map(c => ({ value: c.id, label: c.nombre }));
   const productoOptions = state.productos.filter(p => p.activo).map(p => ({ value: p.id, label: p.nombre }));
 
-  function crearCamion() {
+  async function crearCamion() {
     const today = new Date();
     const dayName = today.toLocaleDateString('es-CL', { weekday: 'long' });
     const dateStr = today.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit' });
-    dispatch({
-      type: 'CREATE_CAMION',
-      payload: {
-        nombre: `Camion ${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${dateStr}`,
-        fecha: today.toISOString()
-      }
-    });
+    await crearCamionFn(`Camion ${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${dateStr}`, today.toISOString());
     toast('Camion creado', 'success');
   }
 
-  function crearCliente(nombre) {
-    const id = Date.now().toString(36);
-    dispatch({ type: 'ADD_CLIENTE', payload: { id, nombre, telefono: '' } });
+  async function crearCliente(nombre) {
+    const id = await crearClienteFn(nombre);
     setPedidoCliente(id);
     toast('Cliente creado', 'success');
     return id;
   }
 
-  function borrarCliente(id) {
-    if (window.confirm('¿Seguro que deseas eliminar este cliente? Se borrarán sus pedidos.')) {
-      api.deleteCliente(id).catch(console.error);
-      dispatch({ type: 'DELETE_CLIENTE', payload: id });
+  async function borrarCliente(id) {
+    if (window.confirm('¿Eliminar este cliente?\n\nSe borrarán todos sus pedidos permanentemente.')) {
+      await deleteClienteFn(id);
       if (pedidoCliente === id) {
         setPedidoCliente('');
       }
@@ -94,9 +86,8 @@ export function Dashboard() {
     }
   }
 
-  function crearProducto(nombre) {
-    const id = 'p' + Date.now().toString(36);
-    dispatch({ type: 'ADD_PRODUCTO', payload: { id, nombre, emoji: '', unidad: 'unidad', activo: true, precioDefault: 0, nombreVariantes: [nombre.toLowerCase()] } });
+  async function crearProducto(nombre) {
+    const id = await crearProductoFn({ nombre, emoji: '', unidad: 'unidad', precioDefault: 0, nombreVariantes: [nombre.toLowerCase()] });
     toast('Producto creado', 'success');
     return id;
   }
@@ -117,14 +108,14 @@ export function Dashboard() {
     }));
   }
 
-  function guardarPedido() {
+  async function guardarPedido() {
     if (!pedidoCliente) { toast('Selecciona un cliente', 'error'); return; }
     const validItems = pedidoItems.filter(item => item.productoId && item.cantidad > 0);
     if (validItems.length === 0) { toast('Agrega al menos un producto', 'error'); return; }
-    dispatch({ type: 'ADD_PEDIDO', payload: { clienteId: pedidoCliente, items: validItems } });
-    validItems.forEach(item => {
-      dispatch({ type: 'UPDATE_STOCK', payload: { productoId: item.productoId, cantidad: item.cantidad, operacion: 'add' } });
-    });
+    await crearPedidoFn(pedidoCliente, validItems);
+    for (const item of validItems) {
+      await updateStock(item.productoId, item.cantidad, 'add');
+    }
     setPedidoItems([]);
     setPedidoCliente('');
     setParserText('');
@@ -147,7 +138,7 @@ export function Dashboard() {
 
   const previewLista = parserText ? parseWhatsAppText(parserText, state.productos) : [];
 
-  function cargarStockLista() {
+  async function cargarStockLista() {
     if (!stockText.trim()) return;
     const parsed = parseStockList(stockText, state.productos);
     if (parsed.length === 0) { toast('No se detectaron productos', 'error'); return; }
@@ -158,7 +149,7 @@ export function Dashboard() {
       if (idx >= 0) updated[idx] = { ...updated[idx], stockTotal: updated[idx].stockTotal + entry.cantidad };
       else updated.push({ productoId: entry.productoId, stockTotal: entry.cantidad, reservado: 0 });
     });
-    dispatch({ type: 'UPDATE_CAMION_PRODUCTOS', payload: updated });
+    await updateCamionProductos(updated);
     setStockText('');
     setModal(null);
     toast('Stock cargado', 'success');

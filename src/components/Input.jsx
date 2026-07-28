@@ -90,30 +90,41 @@ export function Select({
 }
 
 export function Stepper({ value, onChange, min = 0, max = 999, step = 1 }) {
+  const displayValue = value === '' || value === undefined ? '' : value;
+
   return (
     <div className="stepper">
       <button
         type="button"
         className="stepper-btn"
-        onClick={() => onChange(Math.max(min, value - step))}
-        disabled={value <= min}
+        onClick={() => onChange(Math.max(min, (Number(value) || 0) - step))}
+        disabled={(Number(value) || 0) <= min}
       >
         -
       </button>
       <input
-        type="number"
-        value={value}
+        type="text"
+        inputMode="numeric"
+        value={displayValue}
         onChange={(e) => {
-          const val = parseInt(e.target.value, 10) || 0;
-          onChange(Math.min(max, Math.max(min, val)));
+          const raw = e.target.value;
+          if (raw === '') {
+            onChange('');
+          } else {
+            const val = parseInt(raw, 10);
+            if (!isNaN(val)) onChange(Math.min(max, Math.max(min, val)));
+          }
+        }}
+        onBlur={() => {
+          if (value === '' || value === undefined) onChange(min);
         }}
         className="stepper-input"
       />
       <button
         type="button"
         className="stepper-btn"
-        onClick={() => onChange(Math.min(max, value + step))}
-        disabled={value >= max}
+        onClick={() => onChange(Math.min(max, (Number(value) || 0) + step))}
+        disabled={(Number(value) || 0) >= max}
       >
         +
       </button>

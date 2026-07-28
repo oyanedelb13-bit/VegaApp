@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useReducer, useEffect, useRef } from 'react';
+import { createContext, useContext, useReducer, useEffect, useRef, useCallback } from 'react';
 import { api } from '../api';
 import { PRODUCTOS_BASE, CLIENTES_BASE } from '../data/initialData';
 
@@ -38,104 +38,20 @@ function reducer(state, action) {
     case 'HIDE_TOAST':
       return { ...state, toast: null };
 
-    case 'CREATE_CAMION': {
-      const newCamion = {
-        id: generateId(),
-        nombre: action.payload.nombre,
-        fecha: action.payload.fecha,
-        estado: 'abierto',
-        productos: [],
-        createdAt: new Date().toISOString()
-      };
-      const camiones = [newCamion, ...state.camiones];
-      return { ...state, camiones, activeCamionId: newCamion.id };
-    }
-
-    case 'CLOSE_CAMION': {
-      const camiones = state.camiones.map(c =>
-        c.id === state.activeCamionId
-          ? { ...c, estado: 'cerrado', closedAt: new Date().toISOString() }
-          : c
-      );
-      return { ...state, camiones };
-    }
+    case 'SET_CAMIONES':
+      return { ...state, camiones: action.payload };
 
     case 'SET_ACTIVE_CAMION':
       return { ...state, activeCamionId: action.payload };
 
-    case 'UPDATE_CAMION_PRODUCTOS': {
-      const camiones = state.camiones.map(c =>
-        c.id === state.activeCamionId
-          ? { ...c, productos: action.payload }
-          : c
-      );
-      return { ...state, camiones };
-    }
+    case 'SET_PRODUCTOS':
+      return { ...state, productos: action.payload };
 
-    case 'ADD_PRODUCTO': {
-      const producto = { id: generateId(), ...action.payload, activo: true };
-      return { ...state, productos: [...state.productos, producto] };
-    }
+    case 'SET_CLIENTES':
+      return { ...state, clientes: action.payload };
 
-    case 'UPDATE_PRODUCTO': {
-      const productos = state.productos.map(p =>
-        p.id === action.payload.id ? { ...p, ...action.payload } : p
-      );
-      return { ...state, productos };
-    }
-
-    case 'ADD_CLIENTE': {
-      const cliente = { id: generateId(), ...action.payload };
-      return { ...state, clientes: [...state.clientes, cliente] };
-    }
-
-    case 'DELETE_CLIENTE': {
-      const id = action.payload;
-      return {
-        ...state,
-        clientes: state.clientes.filter(c => c.id !== id),
-        pedidos: state.pedidos.filter(p => p.clienteId !== id)
-      };
-    }
-
-    case 'ADD_PEDIDO': {
-      const pedido = {
-        id: generateId(),
-        camionId: state.activeCamionId,
-        clienteId: action.payload.clienteId,
-        items: action.payload.items,
-        estado: 'pendiente',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      return { ...state, pedidos: [pedido, ...state.pedidos] };
-    }
-
-    case 'UPDATE_PEDIDO': {
-      const pedidos = state.pedidos.map(p =>
-        p.id === action.payload.id
-          ? { ...p, ...action.payload, updatedAt: new Date().toISOString() }
-          : p
-      );
-      return { ...state, pedidos };
-    }
-
-    case 'UPDATE_STOCK': {
-      const { productoId, cantidad, operacion } = action.payload;
-      const camiones = state.camiones.map(c => {
-        if (c.id !== state.activeCamionId) return c;
-        const productos = (c.productos || []).map(p => {
-          if (p.productoId !== productoId) return p;
-          const cur = p.reservado || 0;
-          return { ...p, reservado: operacion === 'add' ? cur + cantidad : Math.max(0, cur - cantidad) };
-        });
-        if (!productos.find(p => p.productoId === productoId) && operacion === 'add') {
-          productos.push({ productoId, stockTotal: 0, reservado: cantidad });
-        }
-        return { ...c, productos };
-      });
-      return { ...state, camiones };
-    }
+    case 'SET_PEDIDOS':
+      return { ...state, pedidos: action.payload };
 
     default:
       return state;
@@ -204,53 +120,152 @@ export function StoreProvider({ children }) {
     init();
   }, []);
 
-  useEffect(() => {
-    if (!state.activeCamionId) return;
+  const crearCamion = useCallback(async (nombre, fecha) => {
+    const id = generateId();
+    const camion = { id, nombre, fecha, estado: 'abierto', productos: [] };
+    await api.createCamion(camion);
+    const camiones = await api.getCamiones();
+    dispatch({ type: 'SET_CAMIONES', payload: camiones });
+    dispatch({ type: 'SET_ACTIVE_CAMION', payload: id });
+    return id;
+  }, []);
+
+  const cerrarCamion = useCallback(async () => {
     const camion = state.camiones.find(c => c.id === state.activeCamionId);
-    if (camion) {
-      api.updateCamionProductos(state.activeCamionId, camion.productos || []).catch(console.error);
-    }
-  }, [state.camiones, state.activeCamionId]);
+    if (!camion) return;
+    await api.updateCamion(camion.id, { estado: 'cerrado', closedAt: new Date().toISOString() });
+    const camiones = await api.getCamiones();
+    dispatch({ type: 'SET_CAMIONES', payload: camiones });
+  }, [state.activeCamionId, state.camiones]);
 
-  useEffect(() => {
-    state.camiones.forEach(c => {
-      if (c.estado === 'cerrado' && c.closedAt) {
-        api.updateCamion(c.id, { estado: 'cerrado', closedAt: c.closedAt }).catch(console.error);
-      }
+  const deleteCamion = useCallback(async (camionId) => {
+    await api.deleteCamion(camionId);
+    const camiones = await api.getCamiones();
+    dispatch({ type: 'SET_CAMIONES', payload: camiones });
+    if (state.activeCamionId === camionId) {
+      const openCamion = camiones.find(c => c.estado === 'abierto');
+      dispatch({ type: 'SET_ACTIVE_CAMION', payload: openCamion?.id || camiones[0]?.id || null });
+    }
+  }, [state.activeCamionId]);
+
+  const setActiveCamion = useCallback(async (camionId) => {
+    dispatch({ type: 'SET_ACTIVE_CAMION', payload: camionId });
+  }, []);
+
+  const updateCamionProductos = useCallback(async (productos) => {
+    if (!state.activeCamionId) return;
+    await api.updateCamionProductos(state.activeCamionId, productos);
+    const camiones = await api.getCamiones();
+    dispatch({ type: 'SET_CAMIONES', payload: camiones });
+  }, [state.activeCamionId]);
+
+  const crearPedido = useCallback(async (clienteId, items) => {
+    const pedido = {
+      id: generateId(),
+      camionId: state.activeCamionId,
+      clienteId,
+      items,
+      estado: 'pendiente'
+    };
+    await api.createPedido(pedido);
+    const pedidos = await api.getPedidos();
+    dispatch({ type: 'SET_PEDIDOS', payload: pedidos });
+    return pedido.id;
+  }, [state.activeCamionId]);
+
+  const updatePedido = useCallback(async (id, data) => {
+    await api.updatePedido(id, data);
+    const pedidos = await api.getPedidos();
+    dispatch({ type: 'SET_PEDIDOS', payload: pedidos });
+  }, []);
+
+  const deletePedido = useCallback(async (id) => {
+    await api.deletePedido(id);
+    const pedidos = await api.getPedidos();
+    dispatch({ type: 'SET_PEDIDOS', payload: pedidos });
+  }, []);
+
+  const crearCliente = useCallback(async (nombre) => {
+    const id = generateId();
+    await api.createCliente({ id, nombre, telefono: '' });
+    const clientes = await api.getClientes();
+    dispatch({ type: 'SET_CLIENTES', payload: clientes });
+    return id;
+  }, []);
+
+  const deleteCliente = useCallback(async (id) => {
+    await api.deleteCliente(id);
+    const clientes = await api.getClientes();
+    const pedidos = await api.getPedidos();
+    dispatch({ type: 'SET_CLIENTES', payload: clientes });
+    dispatch({ type: 'SET_PEDIDOS', payload: pedidos });
+  }, []);
+
+  const crearProducto = useCallback(async (producto) => {
+    const id = generateId();
+    await api.createProducto({ id, ...producto, activo: true });
+    const productos = await api.getProductos();
+    dispatch({ type: 'SET_PRODUCTOS', payload: productos });
+    return id;
+  }, []);
+
+  const updateProducto = useCallback(async (id, data) => {
+    await api.updateProducto(id, data);
+    const productos = await api.getProductos();
+    dispatch({ type: 'SET_PRODUCTOS', payload: productos });
+  }, []);
+
+  const deleteProducto = useCallback(async (id) => {
+    await api.deleteProducto(id);
+    const productos = await api.getProductos();
+    const camiones = await api.getCamiones();
+    dispatch({ type: 'SET_PRODUCTOS', payload: productos });
+    dispatch({ type: 'SET_CAMIONES', payload: camiones });
+  }, []);
+
+  const updateStock = useCallback(async (productoId, cantidad, operacion) => {
+    const camion = state.camiones.find(c => c.id === state.activeCamionId);
+    if (!camion) return;
+    const productos = (camion.productos || []).map(p => {
+      if (p.productoId !== productoId) return p;
+      const cur = p.reservado || 0;
+      return { ...p, reservado: operacion === 'add' ? cur + cantidad : Math.max(0, cur - cantidad) };
     });
-  }, [state.camiones]);
-
-  useEffect(() => {
-    if (state.pedidos.length > 0) {
-      const last = state.pedidos[0];
-      if (last && last.createdAt === last.updatedAt) {
-        api.createPedido(last).catch(console.error);
-      } else if (last) {
-        api.updatePedido(last.id, { estado: last.estado }).catch(console.error);
-      }
+    if (!productos.find(p => p.productoId === productoId) && operacion === 'add') {
+      productos.push({ productoId, stockTotal: 0, reservado: cantidad });
     }
-  }, [state.pedidos]);
+    await api.updateCamionProductos(state.activeCamionId, productos);
+    const camiones = await api.getCamiones();
+    dispatch({ type: 'SET_CAMIONES', payload: camiones });
+  }, [state.activeCamionId, state.camiones]);
 
-  useEffect(() => {
-    if (state.productos.length > 0) {
-      const last = state.productos[state.productos.length - 1];
-      if (last) {
-        api.createProducto(last).catch(console.error);
-      }
-    }
-  }, [state.productos.length]);
-
-  useEffect(() => {
-    if (state.clientes.length > 0) {
-      const last = state.clientes[state.clientes.length - 1];
-      if (last) {
-        api.createCliente(last).catch(console.error);
-      }
-    }
-  }, [state.clientes.length]);
+  const value = {
+    state,
+    dispatch,
+    crearCamion,
+    cerrarCamion,
+    deleteCamion,
+    setActiveCamion,
+    updateCamionProductos,
+    crearPedido,
+    updatePedido,
+    deletePedido,
+    crearCliente,
+    deleteCliente,
+    crearProducto,
+    updateProducto,
+    deleteProducto,
+    updateStock,
+    showToast: useCallback((message, type = 'info', duration = 3000) => {
+      dispatch({ type: 'SHOW_TOAST', payload: { message, type, duration } });
+    }, []),
+    hideToast: useCallback(() => {
+      dispatch({ type: 'HIDE_TOAST' });
+    }, [])
+  };
 
   return (
-    <StoreContext.Provider value={{ state, dispatch }}>
+    <StoreContext.Provider value={value}>
       {children}
     </StoreContext.Provider>
   );

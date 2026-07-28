@@ -1,6 +1,7 @@
 'use client';
-import { Clock, User } from 'lucide-react';
+import { Clock, User, Trash2 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
+import { useToast } from './Toast';
 import './OrderCard.css';
 
 const STATUS_CONFIG = {
@@ -10,7 +11,8 @@ const STATUS_CONFIG = {
 };
 
 export function OrderCard({ pedido, onClick }) {
-  const { state, dispatch } = useStore();
+  const { state, updatePedido, deletePedido } = useStore();
+  const { toast } = useToast();
   const cliente = state.clientes.find(c => c.id === pedido.clienteId);
 
   const total = pedido.items.reduce((sum, item) => {
@@ -21,13 +23,21 @@ export function OrderCard({ pedido, onClick }) {
 
   const status = STATUS_CONFIG[pedido.estado] || STATUS_CONFIG.pendiente;
 
-  function handleStatusChange(e) {
+  async function handleStatusChange(e) {
     e.stopPropagation();
     const newStatus = e.target.value;
-    dispatch({
-      type: 'UPDATE_PEDIDO',
-      payload: { id: pedido.id, estado: newStatus }
-    });
+    await updatePedido(pedido.id, { estado: newStatus });
+  }
+
+  async function handleDelete(e) {
+    e.stopPropagation();
+    if (!confirm('¿Borrar este pedido?\n\nEsta acción no se puede deshacer.')) return;
+    try {
+      await deletePedido(pedido.id);
+      toast('Pedido eliminado', 'success');
+    } catch {
+      toast('Error al eliminar', 'error');
+    }
   }
 
   function formatTime(dateStr) {
@@ -51,30 +61,39 @@ export function OrderCard({ pedido, onClick }) {
       </div>
 
       <div className="order-products">
-        {pedido.items.slice(0, 3).map((item, i) => {
+        {pedido.items.slice(0, 4).map((item, i) => {
           const producto = state.productos.find(p => p.id === item.productoId);
           return (
-            <span key={i} className="product-tag">
-              {item.cantidad}x {producto?.nombre || '?'}
-            </span>
+            <div key={i} className="product-item">
+              <span className="product-emoji">{producto?.emoji || '📦'}</span>
+              <span className="product-info">
+                <span className="product-qty">{item.cantidad}x</span>
+                <span className="product-name">{producto?.nombre || '?'}</span>
+              </span>
+            </div>
           );
         })}
-        {pedido.items.length > 3 && (
-          <span className="more-products">+{pedido.items.length - 3}</span>
+        {pedido.items.length > 4 && (
+          <span className="more-products">+{pedido.items.length - 4} más</span>
         )}
       </div>
 
       <div className="order-footer">
         <span className="order-total">${total.toLocaleString()}</span>
-        <select
-          className={`status-badge ${status.className}`}
-          value={pedido.estado}
-          onChange={handleStatusChange}
-        >
-          <option value="pendiente">Pendiente</option>
-          <option value="pagado">Pagado</option>
-          <option value="entregado">Entregado</option>
-        </select>
+        <div className="order-actions">
+          <button className="order-delete-btn" onClick={handleDelete} title="Borrar pedido">
+            <Trash2 size={14} />
+          </button>
+          <select
+            className={`status-badge ${status.className}`}
+            value={pedido.estado}
+            onChange={handleStatusChange}
+          >
+            <option value="pendiente">Pendiente</option>
+            <option value="pagado">Pagado</option>
+            <option value="entregado">Entregado</option>
+          </select>
+        </div>
       </div>
     </div>
   );

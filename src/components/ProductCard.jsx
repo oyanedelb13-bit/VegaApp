@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Edit2, Check, X } from 'lucide-react';
+import { Edit2, Check, X, Trash2 } from 'lucide-react';
 import { Stepper } from './Input';
 import './ProductCard.css';
 
@@ -10,35 +10,49 @@ export function ProductCard({
   reservado = 0,
   onUpdateStock,
   onUpdatePrecio,
+  onDelete,
   editable = true
 }) {
   const [isEditingStock, setIsEditingStock] = useState(false);
   const [isEditingPrecio, setIsEditingPrecio] = useState(false);
-  const [tempStock, setTempStock] = useState(stockTotal);
-  const [tempPrecio, setTempPrecio] = useState(producto.precioDefault || 0);
+  const [tempStock, setTempStock] = useState(String(stockTotal));
+  const [tempPrecio, setTempPrecio] = useState(String(producto.precioDefault || 0));
 
   const disponible = Math.max(0, stockTotal - reservado);
   const stockPercent = stockTotal > 0 ? (reservado / stockTotal) * 100 : 0;
 
   function handleSaveStock() {
-    onUpdateStock?.(tempStock);
+    onUpdateStock?.(Number(tempStock) || 0);
     setIsEditingStock(false);
   }
 
   function handleSavePrecio() {
-    onUpdatePrecio?.(tempPrecio);
+    onUpdatePrecio?.(Number(tempPrecio) || 0);
     setIsEditingPrecio(false);
   }
 
   function handleCancel() {
-    setTempStock(stockTotal);
-    setTempPrecio(producto.precioDefault || 0);
+    setTempStock(String(stockTotal));
+    setTempPrecio(String(producto.precioDefault || 0));
     setIsEditingStock(false);
     setIsEditingPrecio(false);
   }
 
   return (
     <div className={`product-card ${!producto.activo ? 'inactive' : ''}`}>
+      {editable && onDelete && (
+        <button
+          className="product-delete-btn"
+          onClick={() => {
+            if (confirm(`¿Borrar ${producto.emoji} ${producto.nombre}?\n\nSe eliminará permanentemente de todos los camiones.`)) {
+              onDelete(producto.id);
+            }
+          }}
+          title="Borrar producto"
+        >
+          <Trash2 size={14} />
+        </button>
+      )}
       <div
         className="product-image"
         style={{ background: producto.color ? producto.color + '22' : '#f5f0e8' }}
@@ -90,9 +104,10 @@ export function ProductCard({
             {isEditingPrecio ? (
               <div className="price-edit">
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={tempPrecio}
-                  onChange={(e) => setTempPrecio(Number(e.target.value))}
+                  onChange={(e) => setTempPrecio(e.target.value)}
                   className="price-input"
                 />
                 <button className="edit-btn save" onClick={handleSavePrecio}>

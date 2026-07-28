@@ -121,7 +121,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
+  flex: 1;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   font-size: 0.8125rem;
@@ -136,6 +136,37 @@
 .camion-item.active {
   background: var(--color-primary);
   color: white;
+}
+
+.camion-item-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.camion-delete-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.camion-item-row:hover .camion-delete-btn {
+  opacity: 1;
+}
+
+.camion-delete-btn:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
 }
 
 .close-camion-btn {

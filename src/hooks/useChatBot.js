@@ -147,7 +147,7 @@ function getToolSummary(toolCall, productos, clientes) {
 }
 
 export function useChatBot() {
-  const { state, dispatch } = useStore();
+  const { state, crearPedido, updateCamionProductos, crearProducto, crearCliente, updateProducto, updatePedido, deleteCliente } = useStore();
   const toast = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -158,8 +158,8 @@ export function useChatBot() {
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
-  const addMessage = useCallback((role, content) => {
-    setMessages(prev => [...prev, { id: genId(), role, content, ts: Date.now() }]);
+  const addMessage = useCallback((role, content, image) => {
+    setMessages(prev => [...prev, { id: genId(), role, content, image, ts: Date.now() }]);
   }, []);
 
   const sendToApi = useCallback(async (payload, isAudio = false) => {
@@ -243,10 +243,8 @@ export function useChatBot() {
         let cliente = findClientByName(args.cliente_nombre, state.clientes);
         let clienteCreado = false;
         if (!cliente) {
-          const newCliente = { id: genId(), nombre: args.cliente_nombre.trim(), telefono: args.cliente_telefono || '' };
-          dispatch({ type: 'ADD_CLIENTE', payload: newCliente });
-          api.createCliente(newCliente).catch(console.error);
-          cliente = newCliente;
+          const clienteId = await crearCliente(args.cliente_nombre.trim());
+          cliente = { id: clienteId, nombre: args.cliente_nombre.trim(), telefono: args.cliente_telefono || '' };
           clienteCreado = true;
         }
         const items = (args.items || []).map(it => {
@@ -258,10 +256,10 @@ export function useChatBot() {
             precioUnitario: it.precio_unitario || p?.precioDefault || 0,
           };
         }).filter(i => i.productoId);
-        dispatch({ type: 'ADD_PEDIDO', payload: { clienteId: cliente.id, items } });
-        items.forEach(it => {
-          dispatch({ type: 'UPDATE_STOCK', payload: { productoId: it.productoId, cantidad: it.cantidad, operacion: 'add' } });
-        });
+        await crearPedido(cliente.id, items);
+        for (const it of items) {
+          await updateStock(it.productoId, it.cantidad, 'add');
+        }
         const resumen = items.map(i => `${i.cantidad} ${i.productoNombre}`).join(', ');
         let msg = `✅ Pedido creado para ${cliente.nombre}: ${resumen}`;
         if (clienteCreado) msg += ` (cliente nuevo)`;
@@ -286,27 +284,21 @@ export function useChatBot() {
           itemsCargados.push(`${it.cantidad} ${p.nombre}`);
           count++;
         });
-        dispatch({ type: 'UPDATE_CAMION_PRODUCTOS', payload: updated });
+        await updateCamionProductos(updated);
         addMessage('assistant', `✅ Stock cargado en ${camion.nombre}: ${itemsCargados.join(', ')}`);
         toast(`Stock cargado (${count} productos)`, 'success');
       } else if (name === 'crear_producto') {
-        const newProd = {
-          id: genId(),
+        await crearProducto({
           nombre: args.nombre,
           emoji: args.emoji || '📦',
           unidad: args.unidad || 'unidad',
-          activo: true,
           precioDefault: 0,
           nombreVariantes: [args.nombre.toLowerCase()],
-        };
-        dispatch({ type: 'ADD_PRODUCTO', payload: newProd });
-        api.createProducto(newProd).catch(console.error);
+        });
         addMessage('assistant', `✅ Producto creado: ${args.emoji || '📦'} ${args.nombre} (${args.unidad})`);
         toast(`Producto ${args.nombre} creado`, 'success');
       } else if (name === 'crear_cliente') {
-        const newCli = { id: genId(), nombre: args.nombre, telefono: args.telefono || '' };
-        dispatch({ type: 'ADD_CLIENTE', payload: newCli });
-        api.createCliente(newCli).catch(console.error);
+        await crearCliente(args.nombre);
         addMessage('assistant', `✅ Cliente creado: ${args.nombre}${args.telefono ? ' (' + args.telefono + ')' : ''}`);
         toast(`Cliente ${args.nombre} creado`, 'success');
       } else if (name === 'actualizar_precio') {
@@ -316,8 +308,7 @@ export function useChatBot() {
           toast('Producto no encontrado', 'error');
           return;
         }
-        dispatch({ type: 'UPDATE_PRODUCTO', payload: { id: p.id, precioDefault: args.nuevo_precio } });
-        api.updateProducto(p.id, { precioDefault: args.nuevo_precio }).catch(console.error);
+        await updateProducto(p.id, { precioDefault: args.nuevo_precio });
         addMessage('assistant', `✅ Precio de ${p.emoji} ${p.nombre} actualizado a $${args.nuevo_precio}`);
         toast(`Precio de ${p.nombre} actualizado`, 'success');
       } else if (name === 'eliminar_pedido') {
@@ -327,7 +318,7 @@ export function useChatBot() {
           toast('Pedido no encontrado', 'error');
           return;
         }
-        dispatch({ type: 'UPDATE_PEDIDO', payload: { id: pedido.id, estado: 'cancelado' } });
+        await updatePedido(pedido.id, { estado: 'cancelado' });
         addMessage('assistant', `✅ Pedido ${args.pedido_id} cancelado`);
         toast('Pedido cancelado', 'success');
       } else if (name === 'eliminar_cliente') {
@@ -337,8 +328,7 @@ export function useChatBot() {
           toast('Cliente no encontrado', 'error');
           return;
         }
-        api.deleteCliente(cliente.id).catch(console.error);
-        dispatch({ type: 'DELETE_CLIENTE', payload: cliente.id });
+        await deleteCliente(cliente.id);
         addMessage('assistant', `✅ Cliente ${cliente.nombre} eliminado junto con sus pedidos`);
         toast(`Cliente ${cliente.nombre} eliminado`, 'success');
       }
@@ -346,7 +336,7 @@ export function useChatBot() {
       addMessage('assistant', `Error ejecutando: ${err.message}`);
       toast(err.message, 'error');
     }
-  }, [state, dispatch, toast, addMessage]);
+  }, [state, crearPedido, updateCamionProductos, crearProducto, crearCliente, updateProducto, updatePedido, deleteCliente, toast, addMessage]);
 
   const confirmTool = useCallback(() => {
     if (pendingTool) {
@@ -365,6 +355,25 @@ export function useChatBot() {
     setPendingTool(null);
   }, []);
 
+  const sendImage = useCallback(async (base64Image, message) => {
+    setIsLoading(true);
+    addMessage('user', message || 'Analizando imagen...', base64Image);
+    try {
+      const res = await fetch('/api/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64Image, message }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      addMessage('assistant', data.result);
+    } catch (err) {
+      addMessage('assistant', `❌ Error al analizar imagen: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [addMessage]);
+
   return {
     isOpen,
     setIsOpen,
@@ -376,6 +385,7 @@ export function useChatBot() {
     pendingTool,
     pendingToolSummary: pendingTool ? getToolSummary(pendingTool, state.productos, state.clientes) : null,
     sendText,
+    sendImage,
     startRecording,
     stopRecording,
     confirmTool,

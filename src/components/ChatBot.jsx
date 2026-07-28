@@ -1,6 +1,6 @@
 'use client';
-import { useRef, useEffect } from 'react';
-import { MessageCircle, X, Mic, Send, Trash2, MicOff } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
+import { MessageCircle, X, Mic, Send, Trash2, MicOff, Image as ImageIcon } from 'lucide-react';
 import { useChatBot } from '../hooks/useChatBot';
 import './ChatBot.css';
 
@@ -11,11 +11,12 @@ export function ChatBot() {
     isLoading, isRecording,
     pendingTool, pendingToolSummary,
     sendText, startRecording, stopRecording,
-    confirmTool, cancelTool, clearChat,
+    confirmTool, cancelTool, clearChat, sendImage,
   } = useChatBot();
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -34,6 +35,23 @@ export function ChatBot() {
   function handleMicClick() {
     if (isRecording) stopRecording();
     else startRecording();
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Solo se aceptan imagenes');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      sendImage(base64, input || 'Analiza esta imagen');
+      setInput('');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   }
 
   return (
@@ -80,13 +98,19 @@ export function ChatBot() {
                   <li>Cargar stock al camion</li>
                   <li>Crear clientes y productos</li>
                   <li>Consultar stock, pedidos, etc.</li>
+                  <li>Analizar imagenes de listas o precios</li>
                 </ul>
                 <p className="chatbot-hint">Prueba: "5 papas, 4 zanahorias a Maria"</p>
               </div>
             )}
             {messages.map(m => (
               <div key={m.id} className={`chatbot-msg chatbot-msg-${m.role}`}>
-                <div className="chatbot-msg-bubble">{m.content}</div>
+                <div className="chatbot-msg-bubble">
+                  {m.image && (
+                    <img src={`data:image/jpeg;base64,${m.image}`} alt="Imagen subida" className="chatbot-msg-image" />
+                  )}
+                  {m.content}
+                </div>
               </div>
             ))}
             {isLoading && (
@@ -141,6 +165,21 @@ export function ChatBot() {
           )}
 
           <div className="chatbot-input-area">
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleFileChange}
+              className="chatbot-file-input"
+            />
+            <button
+              className="chatbot-image-btn"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              title="Subir imagen"
+            >
+              <ImageIcon size={18} />
+            </button>
             <textarea
               ref={inputRef}
               className="chatbot-input"

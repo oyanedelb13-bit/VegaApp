@@ -19,7 +19,7 @@ const STATUS_FILTERS = [
 ];
 
 export function Pedidos() {
-  const { state, dispatch } = useStore();
+  const { state, crearCliente: crearClienteFn, deleteCliente: deleteClienteFn, crearProducto: crearProductoFn, crearPedido: crearPedidoFn, updateStock } = useStore();
   const activeCamion = useActiveCamion();
   const toast = useToast();
   const [filter, setFilter] = useState('all');
@@ -47,18 +47,16 @@ export function Pedidos() {
   const clienteOptions = state.clientes.map(c => ({ value: c.id, label: c.nombre }));
   const productoOptions = state.productos.filter(p => p.activo).map(p => ({ value: p.id, label: p.nombre }));
 
-  function crearCliente(nombre) {
-    const id = Date.now().toString(36);
-    dispatch({ type: 'ADD_CLIENTE', payload: { id, nombre, telefono: '' } });
+  async function crearCliente(nombre) {
+    const id = await crearClienteFn(nombre);
     setPedidoCliente(id);
     toast('Cliente creado', 'success');
     return id;
   }
 
-  function borrarCliente(id) {
-    if (window.confirm('¿Seguro que deseas eliminar este cliente? Se borrarán sus pedidos.')) {
-      api.deleteCliente(id).catch(console.error);
-      dispatch({ type: 'DELETE_CLIENTE', payload: id });
+  async function borrarCliente(id) {
+    if (window.confirm('¿Eliminar este cliente?\n\nSe borrarán todos sus pedidos permanentemente.')) {
+      await deleteClienteFn(id);
       if (pedidoCliente === id) {
         setPedidoCliente('');
       }
@@ -66,9 +64,8 @@ export function Pedidos() {
     }
   }
 
-  function crearProducto(nombre) {
-    const id = 'p' + Date.now().toString(36);
-    dispatch({ type: 'ADD_PRODUCTO', payload: { id, nombre, emoji: '', unidad: 'unidad', activo: true, precioDefault: 0, nombreVariantes: [nombre.toLowerCase()] } });
+  async function crearProducto(nombre) {
+    const id = await crearProductoFn({ nombre, emoji: '', unidad: 'unidad', precioDefault: 0, nombreVariantes: [nombre.toLowerCase()] });
     toast('Producto creado', 'success');
     return id;
   }
@@ -89,14 +86,14 @@ export function Pedidos() {
     }));
   }
 
-  function guardarPedido() {
+  async function guardarPedido() {
     if (!pedidoCliente) { toast('Selecciona un cliente', 'error'); return; }
     const validItems = pedidoItems.filter(item => item.productoId && item.cantidad > 0);
     if (validItems.length === 0) { toast('Agrega al menos un producto', 'error'); return; }
-    dispatch({ type: 'ADD_PEDIDO', payload: { clienteId: pedidoCliente, items: validItems } });
-    validItems.forEach(item => {
-      dispatch({ type: 'UPDATE_STOCK', payload: { productoId: item.productoId, cantidad: item.cantidad, operacion: 'add' } });
-    });
+    await crearPedidoFn(pedidoCliente, validItems);
+    for (const item of validItems) {
+      await updateStock(item.productoId, item.cantidad, 'add');
+    }
     resetForm();
     toast('Pedido guardado', 'success');
   }

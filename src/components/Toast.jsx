@@ -5,17 +5,17 @@ import { useStore } from '../context/StoreContext';
 import './Toast.css';
 
 export function Toast() {
-  const { state, dispatch } = useStore();
+  const { state, hideToast } = useStore();
   const toast = state.toast;
 
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => {
-        dispatch({ type: 'HIDE_TOAST' });
+        hideToast();
       }, toast.duration || 3000);
       return () => clearTimeout(timer);
     }
-  }, [toast, dispatch]);
+  }, [toast, hideToast]);
 
   if (!toast) return null;
 
@@ -34,12 +34,6 @@ export function Toast() {
 }
 
 export function useToast() {
-  const { dispatch } = useStore();
-
-  return (message, type = 'info', duration = 3000) => {
-    dispatch({
-      type: 'SHOW_TOAST',
-      payload: { message, type, duration }
-    });
-  };
+  const { showToast } = useStore();
+  return showToast;
 }
