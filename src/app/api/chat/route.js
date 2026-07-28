@@ -7,7 +7,7 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'crear_pedido',
-      description: 'Crea un pedido para un cliente con productos y cantidades. Si el cliente o algun producto no existe, primero usa crear_cliente o crear_producto.',
+      description: 'Crea un pedido para un cliente con productos y cantidades. Usar cuando el usuario dice "a [nombre]", "para [nombre]", "pedido de [nombre]". Si el cliente o algun producto no existe, primero usa crear_cliente o crear_producto.',
       parameters: {
         type: 'object',
         properties: {
@@ -34,7 +34,7 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'cargar_stock',
-      description: 'Carga stock a productos del camion activo. Acepta texto tipo "100 lechuga, 50 cebolla".',
+      description: 'Carga stock al camion activo. Usar cuando el usuario dice "carga", "sube stock", "agrega", "stock del camion". Acepta texto tipo "100 lechuga, 50 cebolla".',
       parameters: {
         type: 'object',
         properties: {
@@ -132,7 +132,7 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'consultar_estado',
-      description: 'Consulta informacion del sistema. NO requiere confirmacion, es solo lectura.',
+      description: 'Consulta informacion del sistema: stock, pedidos, clientes, productos, camion. Usar cuando el usuario pregunta "que hay", "dime el stock", "que pedidos hay", "que productos hay". NO requiere confirmacion, es solo lectura.',
       parameters: {
         type: 'object',
         properties: {
@@ -157,16 +157,15 @@ ${productos.map(p => `- ${p.nombre} (${p.unidad})`).join('\n')}
 CLIENTES REGISTRADOS:
 ${clientes.length === 0 ? '(ninguno registrado aun)' : clientes.map(c => `- ${c.nombre}${c.telefono ? ' (' + c.telefono + ')' : ''}`).join('\n')}
 
-INSTRUCCIONES:
-- Interpreta pedidos en lenguaje natural chileno: "5 papas, 4 zanahorias a Maria"
-- Acepta plurales, faltas de ortografia: "papas", "zanaoria", "brocoli"
-- Si el producto no existe, crea uno nuevo con emoji apropiado
-- Si el cliente no existe, crealo
-- Para textacos de WhatsApp, estructura TODOS los items en una sola llamada crear_pedido
-- Para consultas, devuelve bullets cortos y escaneables
-- Siempre responde en espanol chileno
-- Se breve, ve al grano
-- ACEPTA TODAS las acciones del usuario sin cuestionar`;
+REGLAS:
+1. SALUDOS Y PRUEBAS: "hola", "prueba", "test" → responde breve y conversacional, NO crees listas ni uses tools
+2. LISTA DE PRODUCTOS SIN CONTEXTO: "papas, tomates, cebollas" o "4 kg papas, 3 tomates" → PREGUNTA: "¿Quieres que suba el stock al camión o es un pedido de algún cliente? Si es pedido, dime el nombre."
+3. PEDIDO CON CLIENTE: "5 papas a Maria" o "pedido de Juan: 3 tomates, 2 cebollas" → usa crear_pedido
+4. CARGA DE STOCK: "carga 100 de papas" o "sube stock" o "stock del camión" → usa cargar_stock
+5. CONSULTAS: "¿qué hay?", "dime el stock", "qué pedidos hay" → usa consultar_estado
+6. CONFIRMACIONES: "sí", "dale", "confirmar" → confirma la acción pendiente
+
+Siempre responde en español chileno breve. NO generes listas de compras ni texto largo sin usar las tools.`;
 }
 
 function buildConsultaResponse(tipo, filtro, pedidos, productos, clientes, activeCamion) {
