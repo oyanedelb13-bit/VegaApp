@@ -147,7 +147,7 @@ function getToolSummary(toolCall, productos, clientes) {
 }
 
 export function useChatBot() {
-  const { state, crearPedido, updateCamionProductos, crearProducto, crearCliente, updateProducto, updatePedido, deleteCliente } = useStore();
+  const { state, crearPedido, updateStock, updateCamionProductos, crearProducto, crearCliente, updateProducto, updatePedido, deleteCliente } = useStore();
   const toast = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -336,7 +336,7 @@ export function useChatBot() {
       addMessage('assistant', `Error ejecutando: ${err.message}`);
       toast(err.message, 'error');
     }
-  }, [state, crearPedido, updateCamionProductos, crearProducto, crearCliente, updateProducto, updatePedido, deleteCliente, toast, addMessage]);
+  }, [state, crearPedido, updateStock, updateCamionProductos, crearProducto, crearCliente, updateProducto, updatePedido, deleteCliente, toast, addMessage]);
 
   const confirmTool = useCallback(() => {
     if (pendingTool) {
