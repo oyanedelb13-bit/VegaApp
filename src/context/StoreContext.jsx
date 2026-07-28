@@ -109,10 +109,33 @@ export function StoreProvider({ children }) {
         const openCamion = finalCamiones.find(c => c.estado === 'abierto');
         activeCamionId = openCamion ? openCamion.id : finalCamiones[0]?.id || null;
 
+        const activePedidos = pedidos.filter(p => p.estado === 'pendiente');
+        finalCamiones = finalCamiones.map(camion => {
+          const camionPedidos = activePedidos.filter(p => p.camionId === camion.id);
+          const reservado = {};
+          camionPedidos.forEach(p => {
+            p.items.forEach(item => {
+              reservado[item.productoId] = (reservado[item.productoId] || 0) + item.cantidad;
+            });
+          });
+          const productos = (camion.productos || []).map(cp => ({
+            ...cp,
+            reservado: reservado[cp.productoId] || 0
+          }));
+          return { ...camion, productos };
+        });
+
         dispatch({
           type: 'INIT_DATA',
           payload: { camiones: finalCamiones, activeCamionId, productos: finalProductos, clientes: finalClientes, pedidos }
         });
+
+        if (activeCamionId) {
+          const activeCamion = finalCamiones.find(c => c.id === activeCamionId);
+          if (activeCamion) {
+            api.updateCamionProductos(activeCamionId, activeCamion.productos || []).catch(console.error);
+          }
+        }
       } catch (err) {
         console.error('API init error:', err);
       }
@@ -174,16 +197,48 @@ export function StoreProvider({ children }) {
   }, [state.activeCamionId]);
 
   const updatePedido = useCallback(async (id, data) => {
+    const pedido = state.pedidos.find(p => p.id === id);
+    if (pedido && data.estado === 'entregado' && pedido.estado !== 'entregado' && state.activeCamionId) {
+      const camion = state.camiones.find(c => c.id === state.activeCamionId);
+      if (camion) {
+        const updated = [...(camion.productos || [])];
+        pedido.items.forEach(item => {
+          const idx = updated.findIndex(u => u.productoId === item.productoId);
+          if (idx >= 0) {
+            updated[idx] = { ...updated[idx], reservado: Math.max(0, (updated[idx].reservado || 0) - item.cantidad) };
+          }
+        });
+        await api.updateCamionProductos(state.activeCamionId, updated);
+      }
+    }
     await api.updatePedido(id, data);
     const pedidos = await api.getPedidos();
+    const camiones = await api.getCamiones();
     dispatch({ type: 'SET_PEDIDOS', payload: pedidos });
-  }, []);
+    dispatch({ type: 'SET_CAMIONES', payload: camiones });
+  }, [state.pedidos, state.activeCamionId, state.camiones]);
 
   const deletePedido = useCallback(async (id) => {
+    const pedido = state.pedidos.find(p => p.id === id);
+    if (pedido && state.activeCamionId) {
+      const camion = state.camiones.find(c => c.id === state.activeCamionId);
+      if (camion) {
+        const updated = [...(camion.productos || [])];
+        pedido.items.forEach(item => {
+          const idx = updated.findIndex(u => u.productoId === item.productoId);
+          if (idx >= 0) {
+            updated[idx] = { ...updated[idx], reservado: Math.max(0, (updated[idx].reservado || 0) - item.cantidad) };
+          }
+        });
+        await api.updateCamionProductos(state.activeCamionId, updated);
+      }
+    }
     await api.deletePedido(id);
     const pedidos = await api.getPedidos();
+    const camiones = await api.getCamiones();
     dispatch({ type: 'SET_PEDIDOS', payload: pedidos });
-  }, []);
+    dispatch({ type: 'SET_CAMIONES', payload: camiones });
+  }, [state.pedidos, state.activeCamionId, state.camiones]);
 
   const crearCliente = useCallback(async (nombre) => {
     const id = generateId();
