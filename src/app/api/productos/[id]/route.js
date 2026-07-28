@@ -23,8 +23,6 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
-    await sql`DELETE FROM pedidos WHERE producto_id = ${id}`;
-    await sql`DELETE FROM camion_productos WHERE producto_id = ${id}`;
     await sql`DELETE FROM productos WHERE id = ${id}`;
     return NextResponse.json({ ok: true });
   } catch (err) {
