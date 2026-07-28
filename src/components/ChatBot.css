@@ -16,6 +16,12 @@
   transition: all var(--transition-fast);
 }
 
+@media (max-width: 767px) {
+  .chatbot-fab {
+    bottom: 24px;
+  }
+}
+
 .chatbot-fab:hover {
   background: var(--color-primary-light);
   transform: scale(1.05);

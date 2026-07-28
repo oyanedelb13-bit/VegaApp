@@ -14,6 +14,12 @@
   margin: 0 auto;
 }
 
+@media (max-width: 767px) {
+  .header-content {
+    padding-left: 52px;
+  }
+}
+
 @media (min-width: 768px) {
   .header-content {
     max-width: 1280px;
