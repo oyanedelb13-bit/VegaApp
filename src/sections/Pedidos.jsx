@@ -7,7 +7,7 @@ import { TextArea, Stepper } from '../components/Input';
 import { SearchSelect } from '../components/SearchSelect';
 import { parseWhatsAppText } from '../utils/parser';
 import { useToast } from '../components/Toast';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ClipboardList } from 'lucide-react';
 import { api } from '../api';
 import './Pedidos.css';
 
@@ -32,7 +32,9 @@ export function Pedidos() {
   if (!activeCamion) {
     return (
       <div className="pedidos-empty">
-        <h2>No hay camion activo</h2>
+        <ClipboardList size={40} strokeWidth={1.5} />
+        <h2>Sin jornada activa</h2>
+        <p>Crea un camion desde el dashboard para ver pedidos</p>
       </div>
     );
   }

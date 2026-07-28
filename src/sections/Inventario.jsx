@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { Search, Plus, X } from 'lucide-react';
+import { Search, Plus, X, Table2 } from 'lucide-react';
 import { useStore, useActiveCamion, useCamionProductos } from '../context/StoreContext';
 import { ProductCard } from '../components/ProductCard';
 import { Button } from '../components/Button';
@@ -56,6 +56,9 @@ export function Inventario() {
   const [emojiQuery, setEmojiQuery] = useState('');
   const emojiPickerRef = useRef(null);
 
+  const [showExcel, setShowExcel] = useState(false);
+  const [excelData, setExcelData] = useState([]);
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
@@ -69,7 +72,9 @@ export function Inventario() {
   if (!activeCamion) {
     return (
       <div className="inventario-empty">
-        <h2>No hay camion activo</h2>
+        <Table2 size={40} strokeWidth={1.5} />
+        <h2>Sin jornada activa</h2>
+        <p>Crea un camion desde el dashboard para gestionar inventario</p>
       </div>
     );
   }
@@ -81,7 +86,7 @@ export function Inventario() {
   function handleUpdateStock(productoId, newStock) {
     const camion = state.camiones.find(c => c.id === state.activeCamionId);
     if (!camion) return;
-    const productos = camion.productos.map(p =>
+    const productos = (camion.productos || []).map(p =>
       p.productoId === productoId ? { ...p, stockTotal: newStock } : p
     );
     if (!productos.find(p => p.productoId === productoId)) {
@@ -145,11 +150,50 @@ export function Inventario() {
     displayEmojis.unshift({ emoji: emojiQuery.trim(), tags: [emojiQuery.trim()] });
   }
 
+  function openExcel() {
+    const data = state.productos.map(p => {
+      const cp = getCamionProduct(p.id);
+      return {
+        id: p.id,
+        emoji: p.emoji,
+        nombre: p.nombre,
+        unidad: p.unidad,
+        stock: cp.stockTotal,
+        precio: p.precioDefault || 0
+      };
+    });
+    setExcelData(data);
+    setShowExcel(true);
+  }
+
+  function updateExcelField(id, field, value) {
+    setExcelData(prev => prev.map(row =>
+      row.id === id ? { ...row, [field]: value } : row
+    ));
+  }
+
+  function saveExcel() {
+    excelData.forEach(row => {
+      const cp = getCamionProduct(row.id);
+      if (cp.stockTotal !== row.stock) {
+        handleUpdateStock(row.id, row.stock);
+      }
+      if ((state.productos.find(p => p.id === row.id)?.precioDefault || 0) !== row.precio) {
+        handleUpdatePrecio(row.id, row.precio);
+      }
+    });
+    setShowExcel(false);
+    toast('Precios y stock actualizados', 'success');
+  }
+
   return (
     <div className="inventario">
       <div className="inventario-header">
         <h1 className="inventario-title">Inventario</h1>
         <span className="inventario-count">{state.productos.length}</span>
+        <button className="excel-btn" onClick={openExcel} title="Vista rapida">
+          <Table2 size={18} />
+        </button>
         <button className="fab-inventario" onClick={() => setShowModal(true)}>
           <Plus size={20} />
         </button>
@@ -185,6 +229,58 @@ export function Inventario() {
       {filteredProductos.length === 0 && (
         <div className="inventario-empty-state">
           <p>No se encontraron productos</p>
+        </div>
+      )}
+
+      {showExcel && (
+        <div className="modal-overlay" onClick={() => setShowExcel(false)}>
+          <div className="modal-sheet excel-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Precios y Stock</h2>
+              <button className="modal-close" onClick={() => setShowExcel(false)}><X size={20} /></button>
+            </div>
+            <div className="modal-body excel-body">
+              <div className="excel-table-wrapper">
+                <table className="excel-table">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th className="excel-th-name">Producto</th>
+                      <th className="excel-th-stock">Stock</th>
+                      <th className="excel-th-precio">Precio</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {excelData.map(row => (
+                      <tr key={row.id}>
+                        <td className="excel-emoji">{row.emoji}</td>
+                        <td className="excel-name">{row.nombre}</td>
+                        <td>
+                          <input
+                            type="number"
+                            className="excel-input"
+                            value={row.stock}
+                            onChange={(e) => updateExcelField(row.id, 'stock', Number(e.target.value))}
+                            min={0}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            className="excel-input"
+                            value={row.precio}
+                            onChange={(e) => updateExcelField(row.id, 'precio', Number(e.target.value))}
+                            min={0}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Button onClick={saveExcel} fullWidth>Guardar cambios</Button>
+            </div>
+          </div>
         </div>
       )}
 

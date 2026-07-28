@@ -8,9 +8,9 @@ import { TextArea, Stepper } from '../components/Input';
 import { SearchSelect } from '../components/SearchSelect';
 import { parseWhatsAppText, parseStockList } from '../utils/parser';
 import { useToast } from '../components/Toast';
-import { Package, ShoppingBag, DollarSign, ClipboardList, Plus, X, ShoppingCart, Boxes } from 'lucide-react';
+import { Package, ShoppingBag, DollarSign, ClipboardList, Plus, X, ShoppingCart, Boxes, Truck } from 'lucide-react';
 import { api } from '../api';
-import './Dashboard.css';
+import '../sections/Dashboard.css';
 
 export function Dashboard() {
   const router = useRouter();
@@ -31,9 +31,10 @@ export function Dashboard() {
   if (!activeCamion) {
     return (
       <div className="dashboard-empty">
-        <h2>No hay camion activo</h2>
-        <p>Crea un nuevo camion para comenzar</p>
-        <button className="action-btn primary" onClick={crearCamion} style={{ marginTop: 16, maxWidth: 260 }}>
+        <Truck size={40} strokeWidth={1.5} />
+        <h2>Sin jornada activa</h2>
+        <p>Crea un camion para comenzar a cargar pedidos</p>
+        <button className="action-btn primary" onClick={crearCamion}>
           Crear Camion
         </button>
       </div>
@@ -142,7 +143,7 @@ export function Dashboard() {
     const parsed = parseStockList(stockText, state.productos);
     if (parsed.length === 0) { toast('No se detectaron productos', 'error'); return; }
     const camion = state.camiones.find(c => c.id === state.activeCamionId);
-    const updated = [...camion.productos];
+    const updated = [...(camion.productos || [])];
     parsed.forEach(entry => {
       const idx = updated.findIndex(p => p.productoId === entry.productoId);
       if (idx >= 0) updated[idx] = { ...updated[idx], stockTotal: updated[idx].stockTotal + entry.cantidad };
@@ -302,7 +303,6 @@ export function Dashboard() {
                       );
                     })}
                   </div>
-
                   <Button onClick={guardarPedido} fullWidth>Guardar Pedido</Button>
                 </div>
               )}
