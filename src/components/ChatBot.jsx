@@ -81,7 +81,7 @@ export function ChatBot() {
                   <li>Crear clientes y productos</li>
                   <li>Consultar stock, pedidos, etc.</li>
                 </ul>
-                <p className="chatbot-hint">Proba: "5 papas, 4 zanahorias a Maria"</p>
+                <p className="chatbot-hint">Prueba: "5 papas, 4 zanahorias a Maria"</p>
               </div>
             )}
             {messages.map(m => (

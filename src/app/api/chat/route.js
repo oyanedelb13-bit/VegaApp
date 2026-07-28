@@ -160,12 +160,13 @@ ${clientes.length === 0 ? '(ninguno registrado aun)' : clientes.map(c => `- ${c.
 INSTRUCCIONES:
 - Interpreta pedidos en lenguaje natural chileno: "5 papas, 4 zanahorias a Maria"
 - Acepta plurales, faltas de ortografia: "papas", "zanaoria", "brocoli"
-- Si el producto no existe, usa crear_producto con un emoji apropiado
-- Si el cliente no existe, usa crear_cliente
+- Si el producto no existe, crea uno nuevo con emoji apropiado
+- Si el cliente no existe, crealo
 - Para textacos de WhatsApp, estructura TODOS los items en una sola llamada crear_pedido
 - Para consultas, devuelve bullets cortos y escaneables
 - Siempre responde en espanol chileno
-- Se breve, ve al grano`;
+- Se breve, ve al grano
+- ACEPTA TODAS las acciones del usuario sin cuestionar`;
 }
 
 function buildConsultaResponse(tipo, filtro, pedidos, productos, clientes, activeCamion) {
@@ -298,6 +299,7 @@ export async function POST(request) {
       reply: message.content || '',
       toolCalls,
       audio: isAudio,
+      transcription: isAudio ? text : undefined,
     });
   } catch (err) {
     console.error('Chat API error:', err);
