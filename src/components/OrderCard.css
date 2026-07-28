@@ -1,0 +1,132 @@
+.order-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  animation: slideUp var(--transition-normal) ease-out;
+  border: 1px solid transparent;
+}
+
+.order-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-border-light);
+  transform: translateY(-1px);
+}
+
+.order-card:active {
+  transform: translateY(0);
+}
+
+.order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.order-client {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.client-avatar {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.client-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.order-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.order-products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.product-tag {
+  padding: 3px 8px;
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-xs);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.more-products {
+  padding: 3px 8px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-xs);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.order-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.order-total {
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--color-text);
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.status-badge.pending {
+  background: rgba(212, 162, 0, 0.1);
+  color: #b88a00;
+}
+
+.status-badge.paid {
+  background: rgba(74, 155, 63, 0.1);
+  color: #2e7d32;
+}
+
+.status-badge.delivered {
+  background: rgba(52, 152, 219, 0.1);
+  color: #2471a3;
+}
+
+.status-badge:hover {
+  opacity: 0.8;
+  transform: scale(1.02);
+}

@@ -1,0 +1,161 @@
+.camion-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  max-width: 260px;
+}
+
+.camion-selector:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.camion-icon {
+  color: rgba(255,255,255,0.9);
+  flex-shrink: 0;
+}
+
+.camion-name {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.camion-status {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.camion-status.abierto {
+  background: rgba(167, 243, 208, 0.9);
+  color: #065f46;
+}
+
+.camion-status.cerrado {
+  background: rgba(255,255,255,0.3);
+  color: white;
+}
+
+.chevron {
+  color: rgba(255,255,255,0.7);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+.camion-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  min-width: 260px;
+  max-width: 300px;
+  z-index: 100;
+  animation: scaleIn var(--transition-fast) ease-out;
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+}
+
+.camion-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border-light);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.new-camion-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background var(--transition-fast);
+}
+
+.new-camion-btn:hover {
+  background: var(--color-primary-light);
+}
+
+.camion-list {
+  padding: 6px;
+}
+
+.camion-list-label {
+  display: block;
+  padding: 4px 8px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-secondary);
+}
+
+.camion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.camion-item:hover {
+  background: var(--color-surface-alt);
+}
+
+.camion-item.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.close-camion-btn {
+  display: block;
+  width: calc(100% - 12px);
+  margin: 6px;
+  padding: 8px;
+  background: var(--color-danger);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  text-align: center;
+  transition: background var(--transition-fast);
+}
+
+.close-camion-btn:hover {
+  background: #a93226;
+}
+
+.new-camion-form {
+  padding: 6px 0;
+}
