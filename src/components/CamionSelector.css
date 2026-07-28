@@ -60,6 +60,14 @@
   .camion-status {
     display: none;
   }
+
+  .camion-name {
+    font-size: 0.75rem;
+  }
+
+  .chevron {
+    display: none;
+  }
 }
 
 .chevron {

@@ -22,10 +22,10 @@
 @media (max-width: 767px) {
   .burger-btn {
     display: flex;
-    top: 18px;
-    left: 12px;
-    width: 36px;
-    height: 36px;
+    top: 14px;
+    left: 10px;
+    width: 34px;
+    height: 34px;
   }
 }
 
