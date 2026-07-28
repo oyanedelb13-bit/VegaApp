@@ -87,22 +87,22 @@
 .stepper {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   background: var(--color-surface-alt);
   border-radius: var(--radius-md);
-  padding: 3px;
+  padding: 4px;
 }
 
 .stepper-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--color-primary);
   transition: all var(--transition-fast);
@@ -120,12 +120,12 @@
 }
 
 .stepper-input {
-  width: 48px;
-  height: 36px;
+  width: 52px;
+  height: 40px;
   text-align: center;
   border: none;
   background: transparent;
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   font-family: var(--font-mono);
   color: var(--color-text);
