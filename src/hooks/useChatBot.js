@@ -181,10 +181,14 @@ export function useChatBot() {
       if (!res.ok) throw new Error(data.error || 'Error en la API');
 
       if (data.transcription) {
-        addMessage('assistant', `🎤 Transcripción: "${data.transcription}"`);
+        addMessage('user', data.transcription);
       }
 
-      if (data.reply) addMessage('assistant', data.reply);
+      if (data.reply) {
+        addMessage('assistant', data.reply);
+      } else if (!data.toolCalls || data.toolCalls.length === 0) {
+        addMessage('assistant', '¿En qué puedo ayudarte?');
+      }
 
       if (data.toolCalls && data.toolCalls.length > 0) {
         const tc = data.toolCalls[0];

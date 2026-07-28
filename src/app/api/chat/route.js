@@ -261,11 +261,23 @@ export async function POST(request) {
       { role: 'user', content: text },
     ];
 
-    const completion = await callGroqWithFallback({
-      messages,
-      tools: TOOLS,
-      tool_choice: 'auto',
-    });
+    let completion;
+    try {
+      completion = await callGroqWithFallback({
+        messages,
+        tools: TOOLS,
+        tool_choice: 'auto',
+      });
+    } catch (toolErr) {
+      if (toolErr.status === 400) {
+        completion = await callGroqWithFallback({
+          messages,
+          temperature: 0.3,
+        });
+      } else {
+        throw toolErr;
+      }
+    }
 
     const choice = completion.choices[0];
     const message = choice.message;
@@ -275,7 +287,7 @@ export async function POST(request) {
       args: JSON.parse(tc.function.arguments || '{}'),
     }));
 
-    if (toolCalls.length > 0 && toolCalls[0].function?.name === 'consultar_estado') {
+    if (toolCalls.length > 0 && toolCalls[0].name === 'consultar_estado') {
       const consultaCall = toolCalls[0];
       const consultaText = buildConsultaResponse(
         consultaCall.args.tipo,
@@ -290,7 +302,7 @@ export async function POST(request) {
         message,
         { role: 'tool', tool_call_id: consultaCall.id, content: consultaText },
       ];
-      const finalCompletion = await callGroqWithFallback({ messages: finalMessages, tools: TOOLS });
+      const finalCompletion = await callGroqWithFallback({ messages: finalMessages });
       const finalReply = finalCompletion.choices[0].message.content || consultaText;
       return NextResponse.json({ reply: finalReply, toolCalls: [], audio: isAudio });
     }

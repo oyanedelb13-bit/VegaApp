@@ -27,7 +27,7 @@ export async function callGroqWithFallback({ messages, tools, tool_choice = 'aut
       });
     } catch (err) {
       lastError = err;
-      if (err.status === 429 || err.status === 503) continue;
+      if (err.status === 429 || err.status === 503 || err.status === 400) continue;
       throw err;
     }
   }
