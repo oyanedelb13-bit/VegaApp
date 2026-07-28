@@ -95,7 +95,7 @@ export function ProductCard({
               onClick={() => editable && setIsEditingStock(true)}
             >
               <span className="disponible">{disponible}</span>
-              <span className="disponible-label">disp.</span>
+              <span className="disponible-label">stock</span>
               {editable && <Edit2 size={12} className="edit-icon" />}
             </button>
           )}

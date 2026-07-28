@@ -230,13 +230,19 @@
 
 .excel-th-stock,
 .excel-th-precio {
-  width: 80px;
+  width: 100px;
   text-align: center;
 }
 
 .excel-table td {
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--color-border-light);
+}
+
+.excel-table td:nth-child(3),
+.excel-table td:nth-child(4) {
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .excel-table tr:last-child td {
