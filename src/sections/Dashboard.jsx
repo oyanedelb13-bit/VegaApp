@@ -42,7 +42,6 @@ export function Dashboard() {
       <div className="dashboard-empty">
         <Truck size={40} strokeWidth={1.5} />
         <h2>Sin jornada activa</h2>
-        <p>Crea un camion para comenzar a cargar pedidos</p>
         <button className="action-btn primary" onClick={crearCamion}>
           Crear Camion
         </button>
