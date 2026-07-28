@@ -3,6 +3,7 @@ import { StoreProvider } from '../context/StoreContext';
 import { Header } from './Header';
 import { BottomNav } from './BottomNav';
 import { Toast } from './Toast';
+import { ChatBot } from './ChatBot';
 
 export function ClientShell({ children }) {
   return (
@@ -14,6 +15,7 @@ export function ClientShell({ children }) {
         </main>
         <BottomNav />
         <Toast />
+        <ChatBot />
       </div>
     </StoreProvider>
   );
