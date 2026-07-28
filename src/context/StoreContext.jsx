@@ -15,7 +15,8 @@ const initialState = {
   productos: [],
   clientes: [],
   pedidos: [],
-  toast: null
+  toast: null,
+  isLoading: true
 };
 
 function reducer(state, action) {
@@ -27,7 +28,8 @@ function reducer(state, action) {
         activeCamionId: action.payload.activeCamionId,
         productos: action.payload.productos,
         clientes: action.payload.clientes,
-        pedidos: action.payload.pedidos
+        pedidos: action.payload.pedidos,
+        isLoading: false
       };
 
     case 'SHOW_TOAST':

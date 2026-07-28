@@ -8,7 +8,7 @@ import { TextArea, Stepper } from '../components/Input';
 import { SearchSelect } from '../components/SearchSelect';
 import { parseWhatsAppText, parseStockList } from '../utils/parser';
 import { useToast } from '../components/Toast';
-import { Package, ShoppingBag, DollarSign, ClipboardList, Plus, X, ShoppingCart, Boxes, Truck } from 'lucide-react';
+import { Package, ShoppingBag, DollarSign, ClipboardList, Plus, X, ShoppingCart, Boxes, Truck, Loader2 } from 'lucide-react';
 import { api } from '../api';
 import '../sections/Dashboard.css';
 
@@ -27,6 +27,15 @@ export function Dashboard() {
   const [parserText, setParserText] = useState('');
 
   const [stockText, setStockText] = useState('');
+
+  if (state.isLoading) {
+    return (
+      <div className="dashboard-empty">
+        <Loader2 size={40} strokeWidth={1.5} className="spin" />
+        <h2>Cargando...</h2>
+      </div>
+    );
+  }
 
   if (!activeCamion) {
     return (

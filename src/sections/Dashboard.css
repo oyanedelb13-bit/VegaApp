@@ -43,6 +43,16 @@
   margin-top: 12px;
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+  color: var(--color-primary);
+}
+
 /* Hero */
 .dashboard-hero {
   padding: 8px 0 20px;
