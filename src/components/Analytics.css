@@ -219,6 +219,24 @@
 
 .warning-products {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.warning-month-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.warning-month-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #b88a00;
+}
+
+.warning-month-products {
+  display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }

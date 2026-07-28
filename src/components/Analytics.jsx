@@ -100,23 +100,38 @@ export function Analytics() {
     return state.productos.filter(p => !p.precioDefault || p.precioDefault === 0);
   }, [state.productos]);
 
-  const mesesSinPedidos = useMemo(() => {
+  const mesesSinPrecios = useMemo(() => {
     const meses = [];
     for (let year = 2024; year <= new Date().getFullYear(); year++) {
       for (let month = 1; month <= 12; month++) {
         if (year > new Date().getFullYear() || (year === new Date().getFullYear() && month > new Date().getMonth() + 1)) break;
-        const hasPedidos = state.pedidos.some(p => {
+
+        const pedidosDelMes = state.pedidos.filter(p => {
           if (!p.createdAt) return false;
           const d = new Date(p.createdAt);
           return d.getFullYear() === year && d.getMonth() + 1 === month;
         });
-        if (!hasPedidos) {
-          meses.push({ year, month });
+
+        if (pedidosDelMes.length > 0) {
+          const productosSinPrecio = [];
+          pedidosDelMes.forEach(p => {
+            p.items.forEach(item => {
+              const producto = state.productos.find(prod => prod.id === item.productoId);
+              if (producto && (!producto.precioDefault || producto.precioDefault === 0)) {
+                if (!productosSinPrecio.find(pk => pk.id === producto.id)) {
+                  productosSinPrecio.push(producto);
+                }
+              }
+            });
+          });
+          if (productosSinPrecio.length > 0) {
+            meses.push({ year, month, productos: productosSinPrecio });
+          }
         }
       }
     }
     return meses.slice(-6);
-  }, [state.pedidos]);
+  }, [state.pedidos, state.productos]);
 
   return (
     <div className="analytics">
@@ -259,18 +274,31 @@ export function Analytics() {
         </div>
       )}
 
-      {mesesSinPedidos.length > 0 && (
+      {mesesSinPrecios.length > 0 && (
         <div className="analytics-warning">
           <div className="warning-header">
             <AlertTriangle size={18} />
-            <span>Meses sin pedidos</span>
+            <span>Meses con pedidos sin precios</span>
           </div>
           <div className="warning-products">
-            {mesesSinPedidos.map(m => (
-              <span key={`${m.year}-${m.month}`} className="warning-product-chip">
-                {allMonths.find(month => month.value === m.month)?.label} {m.year}
-              </span>
-            ))}
+            {mesesSinPrecios.map(m => {
+              const nombreMes = allMonths.find(month => month.value === m.month)?.label;
+              return (
+                <div key={`${m.year}-${m.month}`} className="warning-month-item">
+                  <span className="warning-month-label">{nombreMes} {m.year}:</span>
+                  <div className="warning-month-products">
+                    {m.productos.slice(0, 5).map(p => (
+                      <span key={p.id} className="warning-product-chip">
+                        {p.emoji} {p.nombre}
+                      </span>
+                    ))}
+                    {m.productos.length > 5 && (
+                      <span className="warning-more">+{m.productos.length - 5}</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

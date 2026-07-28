@@ -19,7 +19,7 @@ const STATUS_FILTERS = [
 ];
 
 export function Pedidos() {
-  const { state, crearCliente: crearClienteFn, deleteCliente: deleteClienteFn, crearProducto: crearProductoFn, crearPedido: crearPedidoFn, updateStock } = useStore();
+  const { state, crearCliente: crearClienteFn, deleteCliente: deleteClienteFn, crearProducto: crearProductoFn, crearPedido: crearPedidoFn, updatePedido: updatePedidoFn, updateStock } = useStore();
   const activeCamion = useActiveCamion();
   const toast = useToast();
   const [filter, setFilter] = useState('all');
@@ -28,6 +28,7 @@ export function Pedidos() {
   const [pedidoCliente, setPedidoCliente] = useState('');
   const [pedidoItems, setPedidoItems] = useState([]);
   const [parserText, setParserText] = useState('');
+  const [editingPedido, setEditingPedido] = useState(null);
 
   if (!activeCamion) {
     return (
@@ -70,8 +71,25 @@ export function Pedidos() {
     return id;
   }
 
+  function handleEditPedido(pedido) {
+    setEditingPedido(pedido);
+    setPedidoCliente(pedido.clienteId);
+    setPedidoItems(pedido.items.map(item => ({ ...item })));
+    setShowModal(true);
+  }
+
+  function cerrarModal() {
+    setShowModal(false);
+    setEditingPedido(null);
+    resetForm();
+  }
+
   function agregarItemManual() {
     setPedidoItems(prev => [...prev, { productoId: '', cantidad: 1, precioUnitario: 0 }]);
+  }
+
+  function quitarItem(index) {
+    setPedidoItems(prev => prev.filter((_, i) => i !== index));
   }
 
   function actualizarItem(index, field, value) {
@@ -90,12 +108,18 @@ export function Pedidos() {
     if (!pedidoCliente) { toast('Selecciona un cliente', 'error'); return; }
     const validItems = pedidoItems.filter(item => item.productoId && item.cantidad > 0);
     if (validItems.length === 0) { toast('Agrega al menos un producto', 'error'); return; }
-    await crearPedidoFn(pedidoCliente, validItems);
-    for (const item of validItems) {
-      await updateStock(item.productoId, item.cantidad, 'add');
+
+    if (editingPedido) {
+      await updatePedidoFn(editingPedido.id, { clienteId: pedidoCliente, items: validItems });
+      toast('Pedido actualizado', 'success');
+    } else {
+      await crearPedidoFn(pedidoCliente, validItems);
+      for (const item of validItems) {
+        await updateStock(item.productoId, item.cantidad, 'add');
+      }
+      toast('Pedido guardado', 'success');
     }
-    resetForm();
-    toast('Pedido guardado', 'success');
+    cerrarModal();
   }
 
   function agregarDesdeLista() {
@@ -150,17 +174,17 @@ export function Pedidos() {
       ) : (
         <div className="pedidos-list">
           {filteredPedidos.map(pedido => (
-            <OrderCard key={pedido.id} pedido={pedido} />
+            <OrderCard key={pedido.id} pedido={pedido} onEdit={handleEditPedido} />
           ))}
         </div>
       )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={cerrarModal}>
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Nuevo Pedido</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}><X size={20} /></button>
+              <h2>{editingPedido ? 'Editar Pedido' : 'Nuevo Pedido'}</h2>
+              <button className="modal-close" onClick={cerrarModal}><X size={20} /></button>
             </div>
             <div className="modal-body">
               <SearchSelect
@@ -193,8 +217,7 @@ export function Pedidos() {
                     <div className="lista-preview">
                       {previewLista.map((item, i) => (
                         <div key={i} className={`preview-chip ${!item.matched ? 'unmatched' : ''}`}>
-                          <span>{item.cantidad} {item.unidad}</span>
-                          <span className="preview-name">{item.producto?.nombre || item.raw}</span>
+                          <span>{item.cantidad} {item.producto?.nombre || item.raw}</span>
                         </div>
                       ))}
                     </div>

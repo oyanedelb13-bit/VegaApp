@@ -1,5 +1,5 @@
 'use client';
-import { Clock, User, Trash2 } from 'lucide-react';
+import { Clock, User, Trash2, Edit2 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { useToast } from './Toast';
 import './OrderCard.css';
@@ -10,7 +10,7 @@ const STATUS_CONFIG = {
   entregado: { label: 'Entregado', className: 'delivered' }
 };
 
-export function OrderCard({ pedido, onClick }) {
+export function OrderCard({ pedido, onClick, onEdit }) {
   const { state, updatePedido, deletePedido } = useStore();
   const { toast } = useToast();
   const cliente = state.clientes.find(c => c.id === pedido.clienteId);
@@ -81,6 +81,11 @@ export function OrderCard({ pedido, onClick }) {
       <div className="order-footer">
         <span className="order-total">${total.toLocaleString()}</span>
         <div className="order-actions">
+          {onEdit && (
+            <button className="order-edit-btn" onClick={(e) => { e.stopPropagation(); onEdit(pedido); }} title="Editar pedido">
+              <Edit2 size={14} />
+            </button>
+          )}
           <button className="order-delete-btn" onClick={handleDelete} title="Borrar pedido">
             <Trash2 size={14} />
           </button>

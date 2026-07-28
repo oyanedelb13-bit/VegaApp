@@ -236,8 +236,7 @@ export function Dashboard() {
                     <div className="lista-preview">
                       {previewLista.map((item, i) => (
                         <div key={i} className={`preview-chip ${!item.matched ? 'unmatched' : ''}`}>
-                          <span>{item.cantidad} {item.unidad}</span>
-                          <span className="preview-name">{item.producto?.nombre || item.raw}</span>
+                          <span>{item.cantidad} {item.producto?.nombre || item.raw}</span>
                         </div>
                       ))}
                     </div>
